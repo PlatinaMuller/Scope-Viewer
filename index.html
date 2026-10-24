@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スコープビューア</title>
+<style>
+  /* =========================================================
+     ★ ここを変えるとポップアップ画像の大きさが変わります ★
+     --popup-width : ポップアップ画像の横幅（高さは自動で16:9）
+       例) 640px / 960px / 1280px / 50vw（画面幅の50%）
+     --icon-size   : 一覧アイコンの大きさ
+     --badge-scale : 大きい画像の上に重ねるアイコンの倍率（1.5 = 1.5倍）
+     --badge-x / --badge-y : 重ねるアイコンの位置。
+       元画像（2560×1440）をペイントで開いたときの座標で書く。
+       x はアイコンの中心、y はアイコンの上端。
+       ポップアップの大きさを変えても、同じ場所に付いてくる。
+     ========================================================= */
+  :root {
+    --popup-width: 960px;
+    --icon-size: 110px;
+    --badge-scale: 1.1;
+    --badge-x: 1280;
+    --badge-y: 90;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #1b1d1f;
+    color: #ddd;
+    font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+    box-sizing: border-box;
+  }
+  h1 { font-size: 18px; font-weight: 600; letter-spacing: .05em; margin: 0 0 24px; color: #bbb; }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: calc((var(--icon-size) + 12px) * 5);   /* 1行に最大10個 */
+  }
+  .grid img {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    object-fit: contain;
+    background: #2a2d30;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+  }
+  .grid img:hover { border-color: #e6c35c; transform: translateY(-2px); }
+
+  /* ポップアップ本体（使用中の画像の上にアイコンを重ねる） */
+  #popup {
+    position: fixed;
+    width: var(--popup-width);
+    max-width: calc(100vw - 32px);   /* 画面からはみ出さないように */
+    pointer-events: none;            /* ポップアップがカーソルの邪魔をしない */
+    display: none;
+    z-index: 10;
+  }
+  #popup.show { display: block; }
+  #popupIcon {
+    position: absolute;
+    left: calc(var(--badge-x) / 2560 * 100%);
+    top:  calc(var(--badge-y) / 1440 * 100%);
+    transform: translateX(-50%);     /* x を中心に合わせる */
+    width: calc(var(--icon-size) * var(--badge-scale));
+    height: calc(var(--icon-size) * var(--badge-scale));
+    object-fit: contain;
+    background: #2a2d30;
+    border: 1px solid #e6c35c;
+    border-radius: 4px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.6);
+  }
+  #popupView {
+    display: block;
+    width: 100%;
+    border: 1px solid #555;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  }
+
+  .size-control {
+    margin-top: 32px;
+    font-size: 13px;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+  <h1>スコープ一覧（カーソルを合わせると使用中の画像を表示）</h1>
+
+  <!-- 1行 = スコープ1個。src がアイコン、data-view が使用中の画像、alt/title が名前。
+       増やすときはこの1行をコピーして書き換え -->
+  <div class="grid">
+    <img src="images/icons/01_1-4x.png" data-view="images/views/01.jpg" alt="1/4x" title="1/4x">
+    <img src="images/icons/02_1x-6x_Sight.png" data-view="images/views/02.jpg" alt="1×/6× Sight" title="1×/6× Sight">
+    <img src="images/icons/03_2x.png" data-view="images/views/03.jpg" alt="2x" title="2x">
+    <img src="images/icons/04_2x_Scope.png" data-view="images/views/04.jpg" alt="2x Scope" title="2x Scope">
+    <img src="images/icons/05_3.5x.png" data-view="images/views/05.jpg" alt="3.5x" title="3.5x">
+    <img src="images/icons/06_3.5x_Scope.png" data-view="images/views/06.jpg" alt="3.5x Scope" title="3.5x Scope">
+    <img src="images/icons/07_3x.png" data-view="images/views/07.jpg" alt="3x" title="3x">
+    <img src="images/icons/08_3xHolo.png" data-view="images/views/08.jpg" alt="3xHolo" title="3xHolo">
+    <img src="images/icons/09_4x.png" data-view="images/views/09.jpg" alt="4x" title="4x">
+    <img src="images/icons/10_4xHolo.png" data-view="images/views/10.jpg" alt="4xHolo" title="4xHolo">
+    <img src="images/icons/11_553.png" data-view="images/views/11.jpg" alt="553" title="553">
+    <img src="images/icons/12_818.png" data-view="images/views/12.jpg" alt="818" title="818">
+    <img src="images/icons/13_Arena_Red_Dot.png" data-view="images/views/13.jpg" alt="Arena Red Dot" title="Arena Red Dot">
+    <img src="images/icons/14_Bat_Ear_Holo.png" data-view="images/views/14.jpg" alt="Bat Ear Holo" title="Bat Ear Holo">
+    <img src="images/icons/15_CH.png" data-view="images/views/15.jpg" alt="CH" title="CH">
+    <img src="images/icons/16_CRDS.png" data-view="images/views/16.jpg" alt="CRDS" title="CRDS">
+    <img src="images/icons/17_Comp.Reflex.png" data-view="images/views/17.jpg" alt="Comp.Reflex" title="Comp.Reflex">
+    <img src="images/icons/18_Compact_Sight.png" data-view="images/views/18.jpg" alt="Compact Sight" title="Compact Sight">
+    <img src="images/icons/19_Holo_Scope.png" data-view="images/views/19.jpg" alt="Holo Scope" title="Holo Scope">
+    <img src="images/icons/20_Hybrid_Sight.png" data-view="images/views/20.jpg" alt="Hybrid Sight" title="Hybrid Sight">
+    <img src="images/icons/21_M1_Red_Dot.png" data-view="images/views/21.jpg" alt="M1 Red Dot" title="M1 Red Dot">
+    <img src="images/icons/22_Mod.Red_Dot.png" data-view="images/views/22.jpg" alt="Mod.Red Dot" title="Mod.Red Dot">
+    <img src="images/icons/23_PK_Reflex.png" data-view="images/views/23.jpg" alt="PK用リフレックス" title="PK用リフレックス">
+    <img src="images/icons/24_PZ3.png" data-view="images/views/24.jpg" alt="PZ3" title="PZ3">
+    <img src="images/icons/25_Raised_Red_Dot.png" data-view="images/views/25.jpg" alt="Raised Red Dot" title="Raised Red Dot">
+    <img src="images/icons/26_TRDS.png" data-view="images/views/26.jpg" alt="TRDS" title="TRDS">
+    <img src="images/icons/27_Tri.Reflex.png" data-view="images/views/27.jpg" alt="Tri.Reflex" title="Tri.Reflex">
+    <img src="images/icons/28_Triangle_Sight.png" data-view="images/views/28.jpg" alt="トライアングルサイト" title="トライアングルサイト">
+    <img src="images/icons/29_Simple_Red_Dot.png" data-view="images/views/29.jpg" alt="簡易レッドドット" title="簡易レッドドット">
+  </div>
+
+  <!-- おまけ：ページ上でも大きさを試せるスライダー -->
+  <label class="size-control">
+    表示サイズ
+    <input type="range" id="sizeSlider" min="320" max="2560" step="10">
+    <span id="sizeValue"></span>
+  </label>
+
+  <div id="popup">
+    <img id="popupIcon" alt="">
+    <img id="popupView" alt="">
+  </div>
+
+<script>
+  const popup     = document.getElementById('popup');
+  const popupIcon = document.getElementById('popupIcon');
+  const popupView = document.getElementById('popupView');
+
+  document.querySelectorAll('.grid img').forEach(icon => {
+    // カーソルが乗ったら表示
+    icon.addEventListener('mouseenter', () => {
+      popupIcon.src = icon.src;            // 上：選んだアイコン
+      popupView.src = icon.dataset.view;   // 下：使用中の画像
+      popup.classList.add('show');
+    });
+    // カーソルが動いたら追いかける
+    icon.addEventListener('mousemove', e => placePopup(e.clientX, e.clientY));
+    // カーソルが離れたら消す
+    icon.addEventListener('mouseleave', () => popup.classList.remove('show'));
+  });
+
+  // カーソルの右下に出す。画面端にぶつかる場合は反対側へ
+  function placePopup(x, y) {
+    const w = popup.offsetWidth, h = popup.offsetHeight, gap = 20;
+    let left = x + gap, top = y + gap;
+    if (left + w > innerWidth)  left = Math.max(8, x - w - gap);
+    if (top + h > innerHeight)  top  = Math.max(8, innerHeight - h - 8);
+    popup.style.left = left + 'px';
+    popup.style.top  = top + 'px';
+  }
+
+  // スライダー（CSSの --popup-width を書き換えるだけ）
+  const slider = document.getElementById('sizeSlider');
+  const label  = document.getElementById('sizeValue');
+  const start  = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--popup-width')) || 960;
+  slider.value = start; label.textContent = start + 'px';
+  slider.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--popup-width', slider.value + 'px');
+    label.textContent = slider.value + 'px';
+  });
+</script>
+</body>
+</html>
